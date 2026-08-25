@@ -1,0 +1,120 @@
+{
+  "ctor": {
+    "params": [
+      [
+        "show_brief",
+        "string"
+      ],
+      [
+        "transition_rule",
+        "string"
+      ]
+    ],
+    "kwparams": {}
+  },
+  "methods": {
+    "append_track": {
+      "params": [
+        [
+          "track_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
+    "begin_order": {
+      "params": [
+        [
+          "first_track_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
+    "finalize_set": {
+      "params": [],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
+    "get_policy": {
+      "params": [],
+      "kwparams": {},
+      "readonly": true,
+      "ret": {
+        "$dict": "any"
+      }
+    },
+    "get_set": {
+      "params": [],
+      "kwparams": {},
+      "readonly": true,
+      "ret": {
+        "$dict": "any"
+      }
+    },
+    "get_transition": {
+      "params": [
+        [
+          "left_id",
+          "string"
+        ],
+        [
+          "right_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": {
+        "$dict": "string"
+      }
+    },
+    "lock_tracks": {
+      "params": [],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
+    "review_transition": {
+      "params": [
+        [
+          "left_id",
+          "string"
+        ],
+        [
+          "right_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
+    "submit_track": {
+      "params": [
+        [
+          "track_id",
+          "string"
+        ],
+        [
+          "description",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    }
+  }
+}
