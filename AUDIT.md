@@ -1,40 +1,58 @@
-# Audit
+# Technical audit — 2026-10-08
 
-Historical status: the original August 25, 2026 source passed the checks below. Its StudioNet deployment is archived in `deployments/studionet-2026-08-25.json` and is not evidence for the revised October source.
+Scope: current `contracts/setlist_bridge.py`, tests, `abi.json`, and the
+StudioNet deployment in `deployments/studionet.json`.
+Deployed LF-normalized source SHA-256:
+`12f990d5f45f6fdff5235e7f209e35cf4695091c8c0a86b9816f43a88217ca60`.
 
-Verification:
+## Findings and fixes
 
-- GenVM lint and semantic validation: PASS
-- Pyright typecheck: PASS, zero errors
-- Direct-mode tests: PASS, 3/3
-- Five-validator GLSim: PASS, 1/1
-- StudioNet finalized execution and LATEST_FINAL readback: PASS
-- ABI-to-source schema comparison: PASS
-- Workspace originality: PASS; 162 contracts scanned, new-corpus maximum 0.4276
-- Runner pin, prompt-injection boundary, source policy, state/role/bounds, forbidden-operation, repository-shape, and secret scans: PASS
+- Earlier this day, a directed-edge key collision was fixed by restricting
+  track IDs to bounded ASCII letters, digits, `_`, and `-`; `>` cannot be used
+  to alias two directed track pairs.
+- Validator consensus checks the closed `FLOW`/`BREATH`/`CLASH` label. The
+  short note is leader-generated, not consensus-checked. The view and docs
+  disclose that distinction; a direct test proves a conflicting label fails
+  validation while a different note with the same label does not.
+- Public callers could fill all eight track slots and leave the curator no
+  recovery path. The curator can now `remove_track` while `COLLECTING`, freeing
+  a slot without changing any already reviewed transition. Removal is barred
+  after lock. Direct tests cover unauthorized removal, capacity restoration,
+  reusing an ID, and the post-lock barrier; the live test exercises removal.
 
-StudioNet:
+## Checks actually run
 
-- Batch: 1
-- Public batch wallet: 0xaeFBE9faf54c2916E5257B8AD99200918DD32DA8
-- Contract address: 0x37d21A2B2da9E45bF46360F71DD7F8dd76C5483c
-- Deployment transaction: 0x4b98a08cfc8650f99612ae95f5147292f3f881cd606eefc02e557c238f3f037e
-- Intelligent transaction: 0x19aed73b7806218317c1b5888c2e734441794e4ba1dffba4ce8917c99919c19f
+| Gate | Result |
+| --- | --- |
+| GenVM lint and strict typecheck | PASS, zero diagnostics |
+| Direct tests | PASS, 10 tests covering roles, phases, edge collision, malformed output, CLASH, consensus mismatch, note scope, and slot recovery |
+| Five-validator GLSim full flow | PASS |
+| StudioNet full flow | PASS, 13 finalized execution-successful receipts |
+| Independent read-only StudioNet regression | PASS, all 13 receipts rechecked |
+| Latest-final state | PASS, `FINAL`, tracks `A → B → C`, 2 reviewed transitions |
+| Deployed source and ABI | PASS, deployed LF source matches repository; deployed schema equals `abi.json` |
 
-Reviewed scope: contracts/setlist_bridge.py, repository tests, source policy, security boundary, and deployments/studionet.json.
+Current contract: https://explorer-studio.genlayer.com/address/0xe09bbfde9406F625e8766C195115A87a5281184D
 
-## October 8, 2026 re-audit of revised source
+AI review transactions:
+https://explorer-studio.genlayer.com/tx/0xbafba6c60e144db3248441383282b5b8240fbbf48dc671a90466661cf4f10705
+and
+https://explorer-studio.genlayer.com/tx/0x4de32cb09dc134860a86b4082c037e0c512b89a0b5ac23708ba9985368a66976
 
-Status: PASS on technical gates; reviewer judgment remains independent.
+Finalization:
+https://explorer-studio.genlayer.com/tx/0x1cfaf0ff8561f8397b8ec768fdf86165d790f8f116bbeab3319d959bd7b2d8a1
 
-- Fixed a directed-edge key collision: IDs containing `>` could make two different track pairs share a transition key. Track IDs now accept only bounded ASCII letters, digits, `_`, and `-`.
-- Made the trust boundary explicit: validator consensus checks the closed `FLOW`/`BREATH`/`CLASH` label, while the short explanatory note is leader-generated and not consensus-checked.
-- GenVM lint and strict typecheck: PASS.
-- Direct tests: 5/5 PASS, including malformed model output, unauthorized curator, key-collision rejection, CLASH rejection, and full set assembly.
-- Five-validator GLSim full lifecycle: PASS.
-- Fresh StudioNet full lifecycle: 11/11 receipts finalized and execution-successful. Two intelligent transition reviews returned `FLOW`; final state is `{"ordered_tracks":["A","B","C"],"phase":"FINAL","review_count":2,"track_count":3}`.
-- Independent read-only StudioNet regression: PASS. The LF-normalized Git source bytes match deployed bytes at `0x6516Be0770b1DEb694eAEc102fB19b6C29Bf2b7c`, SHA-256 `ae90602a5b3a9655319b4d5e7e3e453d91ae5826dd829be9b6185bc800e551e4`.
-- Repository history secret scan: no credential patterns found. No private key was stored in this repository; the test used a disposable in-process wallet.
-- Public GitHub release: source, tests, StudioNet evidence, and MIT license are accessible without signing in.
+The exact transaction order is in `deployments/studionet.json`. Historical
+deployments at `0x6516Be0770b1DEb694eAEc102fB19b6C29Bf2b7c` and
+`0x37d21A2B2da9E45bF46360F71DD7F8dd76C5483c` do not represent the
+current source.
 
-Remaining limits: track descriptions, show brief, and transition rule are caller-supplied public text, not authenticated audio evidence. A `FLOW` label is a creative judgment, not proof that a live performance will work. The curator decides the final order. No funds are handled. These limits are stated in the README, source policy, and security notes.
+## Remaining boundaries
+
+Track descriptions and the show's rules are public caller-provided text, not
+authenticated audio. Anyone may request a transition review after lock; the
+first review of a directed pair is final for this deployment, although the
+curator alone chooses the final order and cannot append an unreviewed or
+`CLASH` pair. Creative AI judgments can vary or fail consensus. The contract
+holds no funds. Technical tests do not guarantee steward acceptance or prove
+that every conceivable flaw is absent.

@@ -3,10 +3,11 @@ import hashlib
 import json
 from pathlib import Path
 import time
-from urllib import request
+from urllib import error, request
 
 import pytest
 from gltest import get_contract_factory
+from gltest.accounts import create_accounts
 from gltest.assertions import tx_execution_succeeded
 from gltest.types import TransactionHashVariant, TransactionStatus
 from gltest.utils import extract_contract_address
@@ -22,17 +23,29 @@ def ok(receipt):
     return receipt
 
 
+def _rpc(method, params):
+    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode("utf-8")
+    last_error = None
+    for attempt in range(8):
+        try:
+            call = request.Request("https://studio.genlayer.com/api", data=body, headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "User-Agent": "Codex-GenLayer-Audit/1.0",
+            })
+            with request.urlopen(call, timeout=30) as response:
+                payload = json.load(response)
+            assert "error" not in payload, payload
+            return payload["result"]
+        except (error.HTTPError, error.URLError, TimeoutError, AssertionError, json.JSONDecodeError) as exc:
+            last_error = exc
+            if attempt < 7:
+                time.sleep(6)
+    raise AssertionError(f"StudioNet RPC verification failed: {last_error}")
+
+
 def deployed_source_hash(address, source):
-    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "gen_getContractCode", "params": [address]}).encode("utf-8")
-    call = request.Request("https://studio.genlayer.com/api", data=body, headers={
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "User-Agent": "Codex-GenLayer-Audit/1.0",
-    })
-    with request.urlopen(call, timeout=30) as response:
-        payload = json.load(response)
-    assert "error" not in payload, payload
-    deployed = base64.b64decode(payload["result"], validate=True)
+    deployed = base64.b64decode(_rpc("gen_getContractCode", [address]), validate=True)
     # GitHub stores this Python source with LF; a Windows checkout may use CRLF.
     local = source.read_bytes().replace(b"\r\n", b"\n")
     assert deployed == local, "deployed source differs from this repository"
@@ -56,18 +69,24 @@ def retry_transient_read_rpc(monkeypatch):
 
 
 @pytest.mark.integration
-def test_studionet_transition_review(default_account):
+def test_studionet_transition_review():
+    curator, outsider = create_accounts(2)
     source = Path(__file__).resolve().parents[2] / "contracts" / "setlist_bridge.py"
     factory = get_contract_factory(contract_file_path=source)
-    deployed = ok(factory.deploy_contract_tx(args=["A three-act evening moving from quiet reflection to a warm communal close.", "A valid adjacency must continue the declared energy arc or provide a deliberate breathing space."], account=default_account, wait_transaction_status=TransactionStatus.FINALIZED))
+    deployed = ok(factory.deploy_contract_tx(args=["A three-act evening moving from quiet reflection to a warm communal close.", "A valid adjacency must continue the declared energy arc or provide a deliberate breathing space."], account=curator, wait_transaction_status=TransactionStatus.FINALIZED))
     address = extract_contract_address(deployed)
     print("STUDIONET_DEPLOY=" + json.dumps({"address": address, "tx": deployed["hash"]}), flush=True)
-    contract = factory.build_contract(address, account=default_account)
+    contract = factory.build_contract(address, account=curator)
+    outsider_contract = factory.build_contract(address, account=outsider)
     tracks = [("A", "A sparse opening built around patient space, a soft pulse, and an unresolved final phrase."), ("B", "A middle piece that keeps the pulse, adds warm harmony, and resolves the opening phrase."), ("C", "A bright communal closer with a stronger beat and a clear sense of arrival for the audience.")]
     setup = []
+    setup.append(ok(outsider_contract.submit_track(args=["X", "A public untrusted track brief that the curator should be able to remove before lock."]).transact(wait_transaction_status=TransactionStatus.FINALIZED)))
+    print("STUDIONET_SETUP_TX=" + setup[-1]["hash"], flush=True)
     for args in tracks:
         setup.append(ok(contract.submit_track(args=list(args)).transact(wait_transaction_status=TransactionStatus.FINALIZED)))
         print("STUDIONET_SETUP_TX=" + setup[-1]["hash"], flush=True)
+    setup.append(ok(contract.remove_track(args=["X"]).transact(wait_transaction_status=TransactionStatus.FINALIZED)))
+    print("STUDIONET_REMOVE_TX=" + setup[-1]["hash"], flush=True)
     setup.append(ok(contract.lock_tracks(args=[]).transact(wait_transaction_status=TransactionStatus.FINALIZED)))
     print("STUDIONET_SETUP_TX=" + setup[-1]["hash"], flush=True)
     intelligent = []
@@ -96,6 +115,7 @@ def test_studionet_transition_review(default_account):
         "final_state": final_state,
     }, sort_keys=True))
     source_hash = deployed_source_hash(address, source)
+    assert _rpc("gen_getContractSchema", [address]) == json.loads((source.parents[1] / "abi.json").read_text(encoding="utf-8"))
     print("STUDIONET_RECORD=" + json.dumps({
         "address": address,
         "deploy_tx": deployed["hash"],

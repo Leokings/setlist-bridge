@@ -84,6 +84,18 @@
       "ret": "null",
       "payable": false
     },
+    "remove_track": {
+      "params": [
+        [
+          "track_id",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
     "review_transition": {
       "params": [
         [

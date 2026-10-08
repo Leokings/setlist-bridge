@@ -74,6 +74,22 @@ class SetlistBridge(gl.Contract):
         self.placed_tracks[key] = False
 
     @gl.public.write
+    def remove_track(self, track_id: str) -> None:
+        self._curator()
+        if self.phase != "COLLECTING":
+            _halt_setlist("track_window_closed")
+        key = self._track(track_id)
+        for index in range(len(self.track_ids)):
+            if self.track_ids[index] == key:
+                for shift in range(index, len(self.track_ids) - 1):
+                    self.track_ids[shift] = self.track_ids[shift + 1]
+                self.track_ids.pop()
+                break
+        self.track_descriptions[key] = ""
+        self.track_submitters[key] = ""
+        self.placed_tracks[key] = False
+
+    @gl.public.write
     def lock_tracks(self) -> None:
         self._curator()
         if self.phase != "COLLECTING" or len(self.track_ids) < 3:

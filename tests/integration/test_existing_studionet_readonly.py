@@ -10,7 +10,7 @@ from genlayer_py.client import create_client
 from genlayer_py.types import TransactionHashVariant
 from gltest.assertions import tx_execution_succeeded
 
-from tests.integration.test_studionet_smoke import deployed_source_hash
+from tests.integration.test_studionet_smoke import _rpc, deployed_source_hash
 
 
 @pytest.mark.integration
@@ -25,6 +25,7 @@ def test_current_deployment_is_final_and_source_matched():
         assert tx_execution_succeeded(receipt), receipt
     source = root / "contracts" / "setlist_bridge.py"
     assert deployed_source_hash(evidence["contract_address"], source) == evidence["source_sha256_lf"]
+    assert _rpc("gen_getContractSchema", [evidence["contract_address"]]) == json.loads((root / "abi.json").read_text(encoding="utf-8"))
     final_state = client.read_contract(
         evidence["contract_address"],
         "get_set",
