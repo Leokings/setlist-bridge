@@ -7,7 +7,7 @@ Setlist Bridge is a reusable GenLayer contract for assembling a live set from AI
 
 Evidence & Supporting:
 
-GitHub repository: https://github.com/Leokings/setlist-bridge (currently private; must be public or reviewer-accessible before submission)
+GitHub repository: https://github.com/Leokings/setlist-bridge (public; MIT licensed)
 
 Contract file: contracts/setlist_bridge.py
 

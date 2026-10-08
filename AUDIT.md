@@ -35,5 +35,6 @@ Status: PASS on technical gates; reviewer judgment remains independent.
 - Fresh StudioNet full lifecycle: 11/11 receipts finalized and execution-successful. Two intelligent transition reviews returned `FLOW`; final state is `{"ordered_tracks":["A","B","C"],"phase":"FINAL","review_count":2,"track_count":3}`.
 - Independent read-only StudioNet regression: PASS. The LF-normalized Git source bytes match deployed bytes at `0x6516Be0770b1DEb694eAEc102fB19b6C29Bf2b7c`, SHA-256 `ae90602a5b3a9655319b4d5e7e3e453d91ae5826dd829be9b6185bc800e551e4`.
 - Repository history secret scan: no credential patterns found. No private key was stored in this repository; the test used a disposable in-process wallet.
+- Public GitHub release: source, tests, StudioNet evidence, and MIT license are accessible without signing in.
 
 Remaining limits: track descriptions, show brief, and transition rule are caller-supplied public text, not authenticated audio evidence. A `FLOW` label is a creative judgment, not proof that a live performance will work. The curator decides the final order. No funds are handled. These limits are stated in the README, source policy, and security notes.
