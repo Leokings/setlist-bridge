@@ -1,11 +1,36 @@
 {
   "status": "PASS",
   "network": "studionet",
-  "batch": 1,
-  "tested_on": "2026-08-25",
-  "batch_wallet": "0xaeFBE9faf54c2916E5257B8AD99200918DD32DA8",
-  "contract_address": "0x37d21A2B2da9E45bF46360F71DD7F8dd76C5483c",
-  "deploy_tx": "0x4b98a08cfc8650f99612ae95f5147292f3f881cd606eefc02e557c238f3f037e",
-  "intelligent_tx": "0x19aed73b7806218317c1b5888c2e734441794e4ba1dffba4ce8917c99919c19f",
-  "observed": "FLOW"
+  "tested_on": "2026-10-08",
+  "contract_address": "0x6516Be0770b1DEb694eAEc102fB19b6C29Bf2b7c",
+  "deploy_tx": "0x42872a0c60281ec3e688550de95994da4570c1d652f6469aa78082716d91bc71",
+  "setup_txs": [
+    "0x25e4fc195d94dac611c2bb2c0cb6a8ea8332cfba7d7eae000fd1b68d552ebb5d",
+    "0xc2a516810149208add20585af7fe07e04f199cae42ee772a4c186035ce0ce4b4",
+    "0xcf21b9b1fcd12f21489952e9e0a39088adb0d7fb8b9a82f03068dd880862e15d",
+    "0x3e70a8da52391f11b6cc378b54503c1175029ea16600cd2a33d42f1d8fbb7160"
+  ],
+  "intelligent_txs": [
+    "0xfac314eb0353b1b9affb99dd20aab74e8ef401859fbf3e30cc3f437a4c02f132",
+    "0xde076d56152454f434b5d4407f7883782a638c0ff6e0150f5e8830aac83006f9"
+  ],
+  "completion_txs": [
+    "0x2f6757e8e585ce1a2b96fea443e43af7b1b7495d26db2114f510298200143762",
+    "0xb7f59ea45cedeb697ec71bb2305f0b470486a3ca64111d8d57bf7c8ce529646a",
+    "0x1aecd1b50daf4b51a63bcc90a4dfd12117ff3f25d209258660a6d581a76881dc",
+    "0x9c6199e61b4666ae3d5e348ddd5c5cbed982f1e0dcf8a14046bfd14d5c982f75"
+  ],
+  "transition_labels": ["FLOW", "FLOW"],
+  "final_state": {
+    "ordered_tracks": ["A", "B", "C"],
+    "phase": "FINAL",
+    "review_count": 2,
+    "track_count": 3
+  },
+  "source_sha256_lf": "ae90602a5b3a9655319b4d5e7e3e453d91ae5826dd829be9b6185bc800e551e4",
+  "verification": {
+    "all_receipts_finalized_and_execution_successful": true,
+    "latest_final_readback": true,
+    "deployed_source_matches_lf_repository_source": true
+  }
 }

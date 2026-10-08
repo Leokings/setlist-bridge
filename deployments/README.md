@@ -1,2 +1,2 @@
-StudioNet evidence is generated only after an isolated-wallet finalized deployment, intelligent write, and final-state readback.
+`studionet.json` records the current, revised contract's successful full-lifecycle StudioNet test: deployment, three track submissions, lock, two independently validated transition reviews, order assembly, finalization, latest-final readback, and an LF-normalized source-byte comparison. The earlier August deployment is preserved in `studionet-2026-08-25.json` but does not contain the October key-collision fix and must not be used as evidence for the revised source.
 

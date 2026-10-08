@@ -28,6 +28,12 @@ def test_five_validators_review_directed_transition():
     for args in [("A", "A sparse opening with patient space and an unresolved final phrase for the next track."), ("B", "A warm middle track that picks up the pulse and resolves the opening musical idea in its description."), ("C", "A bright communal closer with a stronger declared pulse and clear sense of arrival.")]:
         ok(contract.submit_track(args=list(args)).transact(wait_transaction_status=TransactionStatus.FINALIZED))
     ok(contract.lock_tracks(args=[]).transact(wait_transaction_status=TransactionStatus.FINALIZED))
-    ok(contract.review_transition(args=["A", "B"]).transact(transaction_context=context(), wait_transaction_status=TransactionStatus.FINALIZED))
-    assert contract.get_set(args=[]).call()["review_count"] == 1
+    for left, right in [("A", "B"), ("B", "C")]:
+        ok(contract.review_transition(args=[left, right]).transact(transaction_context=context(), wait_transaction_status=TransactionStatus.FINALIZED))
+    ok(contract.begin_order(args=["A"]).transact(wait_transaction_status=TransactionStatus.FINALIZED))
+    ok(contract.append_track(args=["B"]).transact(wait_transaction_status=TransactionStatus.FINALIZED))
+    ok(contract.append_track(args=["C"]).transact(wait_transaction_status=TransactionStatus.FINALIZED))
+    ok(contract.finalize_set(args=[]).transact(wait_transaction_status=TransactionStatus.FINALIZED))
+    state = contract.get_set(args=[]).call()
+    assert state == {"phase": "FINAL", "track_count": 3, "review_count": 2, "ordered_tracks": ["A", "B", "C"]}
 

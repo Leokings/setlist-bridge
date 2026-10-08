@@ -30,6 +30,28 @@ def test_reviewed_edges_build_complete_set(direct_vm, direct_deploy, direct_alic
     assert contract.get_set()["phase"] == "FINAL"
 
 
+def test_track_ids_cannot_alias_a_directed_edge(direct_vm, direct_deploy, direct_alice):
+    direct_vm.sender = direct_alice
+    contract = direct_deploy(str(CONTRACT), "A carefully paced community show with three distinct sections.", "Every adjacency must support the declared arc without pretending to inspect audio.", sdk_version=SDK)
+    with direct_vm.expect_revert("invalid_track_id"):
+        contract.submit_track("A>B", "A track name containing the edge separator could collide with another directed transition.")
+    with direct_vm.expect_revert("invalid_track_id"):
+        contract.submit_track("A\nB", "A track name containing a newline must not be usable as a transition key.")
+
+
+def test_unreviewed_or_clashing_transition_cannot_be_appended(direct_vm, direct_deploy, direct_alice):
+    contract = built(direct_vm, direct_deploy, direct_alice)
+    direct_vm.mock_llm(PROMPT, json.dumps({"transition": "CLASH", "note": "The arc breaks here."}))
+    contract.review_transition("A", "B")
+    contract.begin_order("A")
+    with direct_vm.expect_revert("approved_transition_required"):
+        contract.append_track("B")
+    with direct_vm.expect_revert("approved_transition_required"):
+        contract.append_track("C")
+    with direct_vm.expect_revert("every_track_must_be_placed"):
+        contract.finalize_set()
+
+
 def test_curator_gate(direct_vm, direct_deploy, direct_alice, direct_bob):
     direct_vm.sender = direct_alice
     contract = direct_deploy(str(CONTRACT), "A carefully paced community show with three distinct sections.", "Every adjacency must support the declared arc without pretending to inspect audio.", sdk_version=SDK)

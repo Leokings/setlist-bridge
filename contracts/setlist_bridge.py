@@ -22,6 +22,13 @@ def _setlist_text(value: str, label: str, low: int, high: int) -> str:
     return result
 
 
+def _track_key(value: str) -> str:
+    key = _setlist_text(value, "track_id", 1, 40)
+    if not key.isascii() or any(not (char.isalnum() or char in "_-") for char in key):
+        _halt_setlist("invalid_track_id")
+    return key
+
+
 class SetlistBridge(gl.Contract):
     curator: Address
     show_brief: str
@@ -47,7 +54,7 @@ class SetlistBridge(gl.Contract):
             _halt_setlist("only_curator")
 
     def _track(self, track_id: str) -> str:
-        key = track_id.strip()
+        key = _track_key(track_id)
         if not self.track_descriptions.get(key, ""):
             _halt_setlist("track_not_found")
         return key
@@ -56,7 +63,7 @@ class SetlistBridge(gl.Contract):
     def submit_track(self, track_id: str, description: str) -> None:
         if self.phase != "COLLECTING":
             _halt_setlist("track_window_closed")
-        key = _setlist_text(track_id, "track_id", 1, 40)
+        key = _track_key(track_id)
         if self.track_descriptions.get(key, ""):
             _halt_setlist("track_id_exists")
         if len(self.track_ids) >= MAX_TRACKS:
@@ -99,11 +106,14 @@ class SetlistBridge(gl.Contract):
 SETLIST_PACKET_END"""
 
         def listen() -> dict[str, str]:
-            raw = gl.nondet.exec_prompt(prompt, response_format="json")
-            if not isinstance(raw, dict) or len(raw) != 2:
+            raw: object = gl.nondet.exec_prompt(prompt, response_format="json")
+            if not isinstance(raw, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
                 raise gl.vm.UserError(f"{SETLIST_MODEL} malformed_transition")
-            label_value = raw.get("transition")
-            note_value = raw.get("note")
+            record = cast(dict[str, Any], raw)  # pyright: ignore[reportUnnecessaryCast]
+            if set(record.keys()) != {"transition", "note"}:
+                raise gl.vm.UserError(f"{SETLIST_MODEL} malformed_transition")
+            label_value = record.get("transition")
+            note_value = record.get("note")
             if not isinstance(label_value, str) or not isinstance(note_value, str):
                 raise gl.vm.UserError(f"{SETLIST_MODEL} invalid_transition_fields")
             label = label_value.strip().upper()
@@ -121,7 +131,7 @@ SETLIST_PACKET_END"""
             except Exception:
                 return False
 
-        decision = gl.vm.run_nondet_unsafe(listen, second_listen)
+        decision = gl.vm.run_nondet_unsafe(listen, second_listen)  # pyright: ignore[reportUnknownMemberType]
         if not isinstance(decision, dict) or decision.get("transition") not in TRANSITIONS:
             raise gl.vm.UserError(f"{SETLIST_MODEL} invalid_consensus_transition")
         self.transition_labels[edge] = cast(str, decision["transition"])
@@ -160,17 +170,17 @@ SETLIST_PACKET_END"""
             _halt_setlist("every_track_must_be_placed")
         self.phase = "FINAL"
 
-    @gl.public.view
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_transition(self, left_id: str, right_id: str) -> dict[str, str]:
         edge = self._track(left_id) + ">" + self._track(right_id)
         if not self.transition_labels.get(edge, ""):
             _halt_setlist("transition_not_found")
-        return {"edge": edge, "transition": self.transition_labels[edge], "note": self.transition_notes[edge]}
+        return {"edge": edge, "transition": self.transition_labels[edge], "note": self.transition_notes[edge], "note_scope": "leader_only_not_consensus_checked"}
 
-    @gl.public.view
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_set(self) -> dict[str, Any]:
         return {"phase": self.phase, "track_count": len(self.track_ids), "review_count": len(self.transition_keys), "ordered_tracks": list(self.ordered_tracks)}
 
-    @gl.public.view
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_policy(self) -> dict[str, Any]:
-        return {"schema": "setlist-bridge/policy/v1", "ai_role": "adjacency_label_only", "human_final_order": True, "audio_inspection": False, "external_browsing": False, "funds": False}
+        return {"schema": "setlist-bridge/policy/v1", "ai_role": "adjacency_label_only", "note_scope": "leader_only_not_consensus_checked", "human_final_order": True, "audio_inspection": False, "external_browsing": False, "funds": False}
