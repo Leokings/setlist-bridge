@@ -4,6 +4,8 @@ Builds a live set from validator-reviewed transitions between participant-suppli
 
 This standalone repository contains one reusable GenLayer Intelligent Contract, direct tests, a five-validator GLSim flow, and an opt-in StudioNet smoke test. It has no frontend, token, payout, proxy, or repository secret.
 
+Licensed under the [MIT License](LICENSE).
+
 ## GenLayer-native decision
 
 track collection -> directed transition review -> curator-selected path -> deterministic completion.
